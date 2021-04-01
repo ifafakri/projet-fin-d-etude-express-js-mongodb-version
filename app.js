@@ -1,0 +1,27 @@
+const express=require("express")
+const multer=require('multer')
+require('events').EventEmitter.defaultMaxListeners = 100;
+var app=express()
+
+const fileUpload = require('express-fileupload');
+app.use(fileUpload());
+
+var router=require('./router')
+
+app.all("/*", function(req, res, next){
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+  next();
+});
+var bodyParser = require('body-parser');
+
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+app.use(bodyParser.json()); // support json encoded bodies
+  app.use(express.json())
+
+
+app.use('/',router)
+
+
+app.listen(3000)
