@@ -17,7 +17,7 @@ app.all("/*", function(req, res, next){
 var bodyParser = require('body-parser');
 
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
-app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.json({limit: '50mb', extended: true})); // support json encoded bodies
   app.use(express.json())
 
 

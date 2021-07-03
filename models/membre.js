@@ -8,9 +8,11 @@ const m=new sh({
  numtel:String,
    mail:String,
    poste:String,
+   image:String,
    dateposte:String,
    motpass:String
    
 })
+
 const membre=mongoose.model('membre',m);
 module.exports=membre
