@@ -3,7 +3,14 @@ const membreClass = require('../class/membre')
 const connectionsMongoDB = require('./connectionsMongoDB.js')
 const mongoose = require("mongoose")
 const profile = require("./../models/profile")
-
+const mysql = require('mysql')
+var db = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  port: '3306',
+  database: 'jci'
+})
 const bureau = require('../models/bureaux')
 const payement=require('../models/payement')
 
@@ -14,23 +21,34 @@ mongoose.Promise = global.Promise
 // Ajouter Nouveau Membre
 
 function ajoutmembre(mb = new Membre()) {
-  connectionsMongoDB.connection()
 
-  var m = new membre({
-    nom: mb.nom,
-    prenom: mb.prenom,
-    dnais: mb.dnais,
-    numtel: mb.dnais,
-    mail: mb.mail,
-    poste: mb.poste,
-    image: mb.image,
-    dateposte: mb.dateposte,
-    motpass: mb.motpass
-  })
-  m.save().then(function () {
-    console.log("membre inserer")
 
+  val=[mb.nom,
+    
+mb.prenom,
+  
+mb.dnais,
+   
+mb.numtel,
+   
+mb.mail,
+    
+mb.poste,
+   
+mb.image,
+   
+mb.dateposte,
+mb.motpass
+  ]
+  db.query("INSERT INTO membres(nom,prenom,dnais,numtel,mail,poste,image,dateposte,motpass) VALUES(?)",[val],(err,data,fields)=>{
+if(err) throw err
+else
+console.log('membre Ajouter')
   })
+
+
+
+
 }
 
 
@@ -38,28 +56,29 @@ function ajoutmembre(mb = new Membre()) {
 
 afficheListeMembre = async (req, res) => {
 
-  await connectionsMongoDB.connection()
 
-
-
-  const arr = await membre.find({})
-  console.log("liste de membre")
-  res.json(arr)
+  db.query("SELECT * FROM membres",(err,data,fields)=>{
+    if(err) throw err
+   else
+   res.send(data)
+  
+  })
+  
 
 
 
 }
 exports.getmembre = async (req, res) => {
 
-  await connectionsMongoDB.connection()
+  
 
+db.query("SELECT * FROM membres WHERE mail=?",[req.params.mail],(err,data,fields)=>{
+  if(err) throw err
+  if(data.length>0){
+    res.send(data[0])
+  }
 
-
-  const arr = await membre.findOne({ mail: req.params.mail })
-  console.log("liste de membre")
-  res.json(arr)
-
-
+})
 
 }
 
@@ -67,11 +86,16 @@ exports.getmembre = async (req, res) => {
 
 
 exports.getPresedent = async function (req, res) {
-  await connectionsMongoDB.connection()
 
-  const memb = await membre.findOne({ "poste": "president" })
+  db.query("SELECT * FROM membres WHERE poste=?",['president'],(err,data,fields)=>{
+    if (err) throw err
+    if(data.length>0)
+    res.send(data[0])
 
-  res.send(memb)
+  })
+
+
+
 
 }
 
@@ -81,23 +105,43 @@ exports.getPresedent = async function (req, res) {
 //modifier Membre
 exports.modifierMembre = async function (m = new Membre) {
 
-  await connectionsMongoDB.connection()
-  var q = { "mail": m.mail }
-  var upd = { mail: m.mail, nom: m.nom, prenom: m.prenom, numtel: m.numtel, poste: m.poste, image: m.image, dnais: m.dnais, motpass: m.motpass }
-  var op = { new: true };
-  var u = await membre.findOneAndUpdate(q, upd, op)
-  console.log("membre modifier")
+ 
+
+
+  
+  val=[m.nom,
+    
+    m.prenom,
+      
+    m.dnais,
+       
+    m.numtel,
+       
+     
+    
+       
+    m.image,
+       
+
+    m.motpass,
+    m.mail
+      ]
+
+db.query("UPDATE membres SET nom=?,prenom=?,dnais=?,numtel=?,image=?,motpass=? WHERE mail=?",val,(err,data,fields)=>{
+if(err) throw err
+
+})
+
 }
 
 //modifier Compte
 exports.modifierCompte = async function (req, res) {
 
-  await connectionsMongoDB.connection()
-  var q = { "mail": req.body.mail }
-  var upd = { mail: req.body.mail, nom: req.body.nom, prenom: req.body.prenom, numtel: req.body.numtel, image: req.body.image, dnais: req.body.dnais, motpass: req.body.motpass }
-  var op = { new: true };
-  var u = await membre.findOneAndUpdate(q, upd, op)
-  console.log("membre modifier")
+
+
+
+
+
 }
 
 
@@ -105,8 +149,15 @@ exports.modifierCompte = async function (req, res) {
 //delete 
 
 exports.deleteMembre = async function (val) {
-  await connectionsMongoDB.connection()
-  await membre.deleteOne({ mail: val });
+  
+db.query("DELETE FROM membres WHERE mail=?",[val],(err,data,fields)=>{
+  if(err) throw err
+  else
+  res.send('membre supprimee')
+})
+
+
+
 
 }
 
@@ -172,13 +223,15 @@ exports.getProfile = async function (req, res) {
 
 
 exports.modifierPosteMembre = async function (req, res) {
-  await connectionsMongoDB.connection()
+ 
+val=[req.body.poste,req.body.mail]
 
-  const q = { poste: req.body.poste }
-  const c = { mail: req.body.mail }
-  const o = { new: true }
-  const up = await membre.findOneAndUpdate(c, q, o)
-  res.send('poste modifier ')
+  db.query("UPDATE membres SET poste=? WHERE mail=?",val,(err,data,fields)=>{
+if(err) throw err
+else
+res.send("poste membre modifier")
+  })
+
 
 
 }
@@ -186,77 +239,87 @@ exports.modifierPosteMembre = async function (req, res) {
 
 // auth
 
+
+
+
 exports.getAuth = async function (m, p) {
-  await connectionsMongoDB.connection()
 
-  const mb = await membre.findOne({ mail: m, motpass: p }).then()
+  const getdata=q=>{
+    return new Promise((resolve,reject)=>{
+      db.query("SELECT * FROM membres WHERE mail=? AND motpass=?",[m,p],(err,data)=>{
+if(err) reject(err)
+console.log(1)
+resolve(data)
 
-  if (mb === null) {
-    return false
-  } else {
-    return true
+      })
+    })
   }
 
-
-
-
+  
+  const z=await getdata()
+  if(z.length>0){   console.log(z.length)
+    return true
+ 
+  }else{
+    return false
+  }
 
 }
 
 
 // ajout un element aux bureaux
 exports.ajoutBureau=async function(req,res) {
-  connectionsMongoDB.connection()
-
-  var m = new bureau({
-    nom:req.body.nom,
-    prenom:req.body.prenom,
  
-   description:req.body.description,
-      mail:req.body.mail,
-      poste:req.body.poste,
-      image:req.body.image,
-  })
-  m.save().then(function () {
-    res.send("bureaux  inserer")
 
-  })
+  val=[req.body.nom,req.body.prenom,req.body.description,req.body.mail,req.body.poste,req.body.image]
+
+db.query("INSERT INTO bureauxes(nom,prenom,description,mail,poste,image) VALUES(?)",[val],(err,data,fields)=>{
+  if(err) throw err
+  else
+  res.send('bureux ajouter !')
+})
+
+
 }
 
 
 // modifier la poste d u bureax
 exports.modifierpostbureaux=async function(req,res){
-  connectionsMongoDB.connection()
 
-  const upd={poste:req.body.poste}
-const c={_id:req.body.id}
-const o={new:true}
+val=[req.body.poste,req.body.id]
+db.query("UPDATE bureauxes SET poste=? WHERE id=?",val,(err,data,fields)=>{
+  if(err) throw err
+  else
+  res.send('poste du bureaux modifier')
+})
 
 
-const re=await bureau.findOneAndUpdate(c,upd,o)
 
-res.send('poste modifier')
 
 }
 
 exports.supprimerBureauPoste=async function(req,res){
 
- connectionsMongoDB.connection()
+
+
+db.query("DELETE FROM bureauxes WHERE id=?",[req.params.id],(err,data,fields)=>{
+if(err) throw err
+else
+res.send('bureaux supprime')
+})
 
 
 
- var s=await bureau.findByIdAndDelete(req.params.id)
-
-res.send("bureaux supprimer")
 
 }
 
 exports.getBureaux=async function(req,res){
-  connectionsMongoDB.connection()
 
-  var g=await bureau.find({})
-  res.json(g)
-
+  db.query("SELECT * FROM bureauxes",(err,data,fields)=>{
+    if(err) throw err
+    else
+    res.send(data)
+  })
 
 
 }
@@ -265,21 +328,13 @@ exports.getBureaux=async function(req,res){
 // Ajout Payement 
 
 exports.AjoutPayement= async function(req,res){
-  connectionsMongoDB.connection()
-
-  var payment =new payement({
-
-    nom:req.body.nom,
-    prix:req.body.prix,
-    date:req.body.date
-    
-  })
-
-
-  payment.save()
-  res.send('payement Ajouter')
-
-
+  
+  val=[req.body.nom,req.body.prix,req.body.date]
+db.query("INSERT INTO payements(nom,prix,date) VALUES(?)",[val],(err,data,fields)=>{
+if(err) throw err
+else
+res.send("payelment inserer !")
+})
 
 
 
@@ -289,9 +344,14 @@ exports.AjoutPayement= async function(req,res){
 // Get liste de payement 
 
 exports.getPayement=async function(req,res){
-  connectionsMongoDB.connection()
-var pay=await payement.find()
-res.json(pay)
+
+  db.query("SELECT * FROM payements",(err,data,fields)=>{
+    if(err) throw err
+    else
+    res.send(data)
+  })
+  
+
 
 
 }

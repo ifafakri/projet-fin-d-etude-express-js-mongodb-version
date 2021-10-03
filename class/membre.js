@@ -1,6 +1,6 @@
 class Membre{
 
-    
+   
  constructor(nom,prenom,datnais,numtel,mail,poste,image,dateposte,motpass,photo){
      this.nom=nom
      this.prenom=prenom

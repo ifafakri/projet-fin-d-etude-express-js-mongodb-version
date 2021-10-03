@@ -1,7 +1,6 @@
 require('dotenv').config()
 const express=require('express')
-
-
+const mysql=require('mysql')
 
 const jwt=require('jsonwebtoken')
 
@@ -36,7 +35,7 @@ router.delete('/membre/:mail',function(req,res,next){
   
 })
 router.put('/membre',function(req,res,next){
-var mb=new Membre(req.body.nom,req.body.prenom,req.body.dnais,req.body.numtel,req.body.mail,req.body.poste,req.body.image,req.body.motpass)
+var mb=new Membre(req.body.nom,req.body.prenom,req.body.dnais,req.body.numtel,req.body.mail,"",req.body.image,"",req.body.motpass,"")
 controllerMembre.modifierMembre(mb)
 console.log(mb)
 res.json(req.body.nom)
@@ -232,7 +231,8 @@ const mail=req.body.mail
 const pass=req.body.pass
 var ma={mail:mail,pass:pass}
 var token= jwt.sign(ma,'afc38722b961912fb2bf96b71b32004004e3a6b3bc75266b3b66ec8a08427661e7005edc1667ad1')
-var x=await controllerMembre.getAuth(mail,pass)
+const x=await controllerMembre.getAuth(mail,pass)
+
 if(x===true){
  
  res.json({t:token,auth:true})
@@ -295,7 +295,9 @@ router.get('/payement',controllerMembre.getPayement)
 
 
 
-
+router.get('/test',(req,res)=>{
+  res.send('test !')
+})
 
 
 
